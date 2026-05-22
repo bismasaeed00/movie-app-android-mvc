@@ -10,22 +10,15 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-// ─── Error type ───────────────────────────────────────────────────────────────
-// Mirrors: enum MovieServiceError in MovieService.swift
-
 sealed class MovieServiceError(message: String) : Exception(message) {
     object InvalidURL : MovieServiceError("Invalid URL.")
-    data class NetworkError(val cause: Throwable) : MovieServiceError("Network error: ${cause.localizedMessage}")
-    data class DecodingError(val cause: Throwable) : MovieServiceError("Decoding error: ${cause.localizedMessage}")
+    data class NetworkError(val error: Throwable) : MovieServiceError("Network error: ${error.message}")
+    data class DecodingError(val error: Throwable) : MovieServiceError("Decoding error: ${error.message}")
     data class HttpError(val code: Int) : MovieServiceError("HTTP error $code.")
 }
 
-// ─── Retrofit interface ───────────────────────────────────────────────────────
-// Mirrors the two URLSession calls inside MovieService.swift
-
 interface TmdbApiService {
 
-    /** Mirrors: func fetchMovies(page: Int) async throws -> MovieResponse */
     @GET("discover/movie")
     suspend fun fetchMovies(
         @Query("api_key") apiKey: String,
@@ -34,7 +27,6 @@ interface TmdbApiService {
         @Query("page") page: Int
     ): Response<MovieResponse>
 
-    /** Mirrors: func fetchMovieDetails(_ movie: Movie) async throws -> MovieDetailsResponse */
     @GET("movie/{movieId}")
     suspend fun fetchMovieDetails(
         @Path("movieId") movieId: Int,
@@ -43,15 +35,10 @@ interface TmdbApiService {
     ): Response<MovieDetailsResponse>
 }
 
-// ─── Service class ────────────────────────────────────────────────────────────
-// Mirrors: final class MovieService in MovieService.swift
-
 class MovieService {
 
-    // Mirrors: private let apiKey = "..."
     private val apiKey = "3db0f53e603350e7a4fda7a09419f20a"
 
-    // Mirrors: private let moviesBaseURL = "https://api.themoviedb.org/3/discover/movie"
     private val retrofit: Retrofit = Retrofit.Builder()
         .baseUrl("https://api.themoviedb.org/3/")
         .addConverterFactory(GsonConverterFactory.create())
@@ -59,7 +46,6 @@ class MovieService {
 
     private val api: TmdbApiService = retrofit.create(TmdbApiService::class.java)
 
-    /** Mirrors: func fetchMovies(page: Int = 1) async throws -> MovieResponse */
     suspend fun fetchMovies(page: Int = 1): MovieResponse {
         val response = try {
             api.fetchMovies(apiKey = apiKey, page = page)
@@ -74,7 +60,6 @@ class MovieService {
         )
     }
 
-    /** Mirrors: func fetchMovieDetails(_ movie: Movie) async throws -> MovieDetailsResponse */
     suspend fun fetchMovieDetails(movie: Movie): MovieDetailsResponse {
         val response = try {
             api.fetchMovieDetails(movieId = movie.id, apiKey = apiKey)

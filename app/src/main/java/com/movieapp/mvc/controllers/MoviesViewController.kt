@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.movieapp.mvc.models.data.Movie
 import com.movieapp.mvc.models.data.local.AppDatabase
 import com.movieapp.mvc.models.data.remote.MovieService
+import com.movieapp.mvc.models.display.MovieListItemDisplay
 import com.movieapp.mvc.models.repository.MovieRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,115 +15,97 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-// ─── MoviesViewController ─────────────────────────────────────────────────────
-// Mirrors: final class MoviesViewController: ObservableObject in MoviesViewController.swift
-//
-// Architectural mapping:
-//   @MainActor                    → viewModelScope (main-thread dispatcher by default)
-//   @Published private(set) var   → private MutableStateFlow + public StateFlow (read-only)
-//   ObservableObject              → ViewModel (observed by Compose via collectAsState())
-//   async func / await            → suspend fun / viewModelScope.launch
-//
-// ROLE (MVC): Controller — owns all business logic and state.
-//             Views (Composables) are dumb; they only read StateFlows and forward events.
+import java.util.Locale
 
 class MoviesViewController(
     private val service: MovieService,
     private val repository: MovieRepository
 ) : ViewModel() {
 
-    // Mirrors: @Published private(set) var movies: [Movie] = []
-    private val _movies = MutableStateFlow<List<Movie>>(emptyList())
-    val movies: StateFlow<List<Movie>> = _movies.asStateFlow()
+    private val _movies = MutableStateFlow<List<MovieListItemDisplay>>(emptyList())
+    val movies: StateFlow<List<MovieListItemDisplay>> = _movies.asStateFlow()
 
-    // Mirrors: @Published private(set) var favoriteMovieIDs: [Int] = []
-    private val _favoriteMovieIDs = MutableStateFlow<List<Int>>(emptyList())
-    val favoriteMovieIDs: StateFlow<List<Int>> = _favoriteMovieIDs.asStateFlow()
+    private val _favouriteMovies = MutableStateFlow<List<MovieListItemDisplay>>(emptyList())
+    val favouriteMovies: StateFlow<List<MovieListItemDisplay>> = _favouriteMovies.asStateFlow()
 
-    // Mirrors: @Published private(set) var isLoading: Bool = false
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    // Mirrors: @Published private(set) var errorMessage: String?
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    // Mirrors: private var currentPage = 1
-    private var currentPage = 1
+    private val _selectedTab = MutableStateFlow(0)
+    val selectedTab: StateFlow<Int> = _selectedTab.asStateFlow()
 
-    // Mirrors: private var totalPages = 0
+    private val _hasMorePages = MutableStateFlow(false)
+    val hasMorePages: StateFlow<Boolean> = _hasMorePages.asStateFlow()
+
+    private val _loadMoreTitle = MutableStateFlow("")
+    val loadMoreTitle: StateFlow<String> = _loadMoreTitle.asStateFlow()
+
+    private var currentPage = 1
     private var totalPages = 0
 
-    // Mirrors: var hasMorePages: Bool { (currentPage + 1) < totalPages }
-    val hasMorePages: Boolean
-        get() = (currentPage + 1) < totalPages
+    init {
+        loadCachedData()
+    }
 
-    // Mirrors: var loadMoreTitle: String { "Next Page: \(currentPage + 1) out of \(totalPages)" }
-    val loadMoreTitle: String
-        get() = "Next Page: ${currentPage + 1} out of $totalPages"
+    fun selectTab(index: Int) { _selectedTab.value = index }
 
-    // Mirrors: func loadNetworkData() async
     fun loadNetworkData() {
         viewModelScope.launch { fetchMoviesResponse() }
     }
 
-    // Mirrors: func refresh() async — pull-to-refresh: clear cache, fetch fresh data
     fun refresh() {
         currentPage = 1
         viewModelScope.launch { fetchMoviesResponse() }
     }
 
-    // Mirrors: func loadNextPage() async
     fun loadNextPage() {
         currentPage += 1
         viewModelScope.launch { fetchMoviesResponse() }
     }
 
-    // Mirrors: func isFavorite(movie: Movie) -> Bool
-    fun isFavorite(movie: Movie): Boolean = favoriteMovieIDs.value.contains(movie.id)
-
-    // Mirrors: func onAppear()
-    fun onAppear() {
-        loadCachedData()
-    }
-
-    // Mirrors: private func loadCachedData()
     private fun loadCachedData() {
         viewModelScope.launch {
-            val moviesData = withContext(Dispatchers.IO) { repository.fetchCachedMovies() }
+            val allMovies = withContext(Dispatchers.IO) { repository.fetchCachedMovies() }
             val paginationInfo = withContext(Dispatchers.IO) { repository.fetchPaginationInfo() }
 
             currentPage = if (paginationInfo.first > 0) paginationInfo.first else 1
             totalPages = paginationInfo.second
 
-            if (moviesData.isEmpty()) return@launch
+            _hasMorePages.value = (currentPage + 1) < totalPages
+            _loadMoreTitle.value = "Next Page: ${currentPage + 1} out of $totalPages"
 
-            _movies.value = moviesData
-            _favoriteMovieIDs.value = withContext(Dispatchers.IO) {
-                repository.fetchFavouriteMovieIDs()
-            }
+            _movies.value = allMovies.map { it.toListItem() }
+            _favouriteMovies.value = allMovies
+                .filter { it.favourite == true }
+                .map { it.toListItem() }
         }
     }
 
-    // Mirrors: private func fetchMoviesResponse() async
     private suspend fun fetchMoviesResponse() {
         _isLoading.value = true
         _errorMessage.value = null
-
         try {
             val fetched = withContext(Dispatchers.IO) { service.fetchMovies(page = currentPage) }
             withContext(Dispatchers.IO) { repository.save(fetched, currentPage) }
             loadCachedData()
         } catch (e: Exception) {
-            _errorMessage.value = e.localizedMessage ?: e.message
+            _errorMessage.value = e.message
         }
-
         _isLoading.value = false
     }
 
-    // ─── ViewModelFactory ─────────────────────────────────────────────────────
-    // Required to inject dependencies; mirrors SwiftUI's @StateObject init path
+    private fun Movie.toListItem(): MovieListItemDisplay = MovieListItemDisplay(
+        id = id,
+        title = title,
+        posterUrl = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
+        rating = String.format(Locale.US, "%.1f", voteAverage),
+        year = if ((releaseDate?.length ?: 0) >= 4) releaseDate!!.take(4) else "N/A",
+        overview = overview
+    )
+
     class Factory(private val context: Context) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

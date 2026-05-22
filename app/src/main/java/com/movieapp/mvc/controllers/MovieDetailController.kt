@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.movieapp.mvc.models.data.Movie
 import com.movieapp.mvc.models.data.local.AppDatabase
 import com.movieapp.mvc.models.data.remote.MovieService
+import com.movieapp.mvc.models.display.MovieDetailDisplay
 import com.movieapp.mvc.models.repository.MovieRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,95 +17,75 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
-// ─── MovieDetailController ────────────────────────────────────────────────────
-// Mirrors: final class MovieDetailController: ObservableObject in MovieDetailController.swift
-//
-// Architectural mapping:
-//   @MainActor                    → viewModelScope (main-thread dispatcher by default)
-//   @Published private(set) var   → private MutableStateFlow + public StateFlow (read-only)
-//   ObservableObject              → ViewModel (observed by Compose via collectAsState())
-//   async func / await            → suspend fun / viewModelScope.launch
-//
-// ROLE (MVC): Controller — handles all business logic for the detail screen.
-//             MovieDetailScreen (Composable) is a dumb presentation layer.
-
 class MovieDetailController(
-    initialMovie: Movie,
+    private val movieId: Int,
     private val service: MovieService,
     private val repository: MovieRepository
 ) : ViewModel() {
 
-    // Mirrors: @Published private(set) var movie: Movie
-    private val _movie = MutableStateFlow(initialMovie)
-    val movie: StateFlow<Movie> = _movie.asStateFlow()
+    private val _rawMovie = MutableStateFlow<Movie?>(null)
 
-    // Mirrors: var rating: String { String(format: "%.1f", movie.voteAverage) }
-    val rating: String
-        get() = String.format(Locale.US, "%.1f", _movie.value.voteAverage)
-
-    // Mirrors: var isFavourite: Bool { movie.favourite ?? false }
-    val isFavourite: Boolean
-        get() = _movie.value.favourite ?: false
-
-    // Mirrors: var overview: String { movie.overview.isEmpty ? "No overview available." : movie.overview }
-    val overview: String
-        get() = _movie.value.overview.ifEmpty { "No overview available." }
+    private val _display = MutableStateFlow<MovieDetailDisplay?>(null)
+    val display: StateFlow<MovieDetailDisplay?> = _display.asStateFlow()
 
     init {
-        // Mirrors: init(movie: Movie) { self.movie = movie; loadCachedMovie() }
         loadCachedMovie()
     }
 
-    // Mirrors: func loadMovieDetails() async
     fun loadMovieDetails() {
         viewModelScope.launch {
+            val raw = _rawMovie.value ?: return@launch
             try {
-                val response = withContext(Dispatchers.IO) {
-                    service.fetchMovieDetails(_movie.value)
-                }
-                withContext(Dispatchers.IO) {
-                    repository.update(movie = _movie.value, detailResponse = response)
-                }
+                val response = withContext(Dispatchers.IO) { service.fetchMovieDetails(raw) }
+                withContext(Dispatchers.IO) { repository.update(movie = raw, detailResponse = response) }
                 loadCachedMovie()
-            } catch (e: Exception) {
-                println(e.localizedMessage ?: e.message)
+            } catch (_: Exception) {
+
             }
         }
     }
 
-    // Mirrors: func toggleFavourite()
     fun toggleFavourite() {
         viewModelScope.launch {
+            val raw = _rawMovie.value ?: return@launch
             withContext(Dispatchers.IO) {
-                repository.updateMovie(
-                    movie = _movie.value,
-                    isFavourite = !(_movie.value.favourite ?: false)
-                )
+                repository.updateMovie(movie = raw, isFavourite = !(raw.favourite ?: false))
             }
             loadCachedMovie()
         }
     }
 
-    // Mirrors: private func loadCachedMovie()
     private fun loadCachedMovie() {
         viewModelScope.launch {
-            val updatedMovie = withContext(Dispatchers.IO) {
-                repository.fetchCachedMovies(id = _movie.value.id).firstOrNull()
+            val movie = withContext(Dispatchers.IO) {
+                repository.fetchCachedMovies(id = movieId).firstOrNull()
             } ?: return@launch
-            _movie.value = updatedMovie
+            _rawMovie.value = movie
+            _display.value = movie.toDisplay()
         }
     }
 
-    // ─── ViewModelFactory ─────────────────────────────────────────────────────
+    private fun Movie.toDisplay(): MovieDetailDisplay = MovieDetailDisplay(
+        id = id,
+        title = title,
+        posterUrl = posterPath?.let { "https://image.tmdb.org/t/p/w500$it" },
+        rating = String.format(Locale.US, "%.1f", voteAverage),
+        year = if ((releaseDate?.length ?: 0) >= 4) releaseDate!!.take(4) else "N/A",
+        runtime = if ((runtime ?: 0) > 0) "$runtime min" else "N/A",
+        overview = overview.ifEmpty { "No overview available." },
+        genres = genres?.map { it.name } ?: emptyList(),
+        isFavourite = favourite ?: false
+    )
+
     class Factory(
-        private val movie: Movie,
+        private val movieId: Int,
         private val context: Context
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             val db = AppDatabase.getInstance(context)
             return MovieDetailController(
-                initialMovie = movie,
+                movieId = movieId,
                 service = MovieService(),
                 repository = MovieRepository(db)
             ) as T

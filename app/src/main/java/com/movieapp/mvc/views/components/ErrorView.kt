@@ -19,42 +19,28 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// ─── ErrorView ────────────────────────────────────────────────────────────────
-// Mirrors: struct ErrorView: View in ErrorView.swift
-//
-// ROLE (MVC): Dumb View — receives data (message) and a callback (retryAction)
-//             from the Controller via the parent screen. No logic lives here.
-
 @Composable
 fun ErrorView(
-    // Mirrors: let message: String
     message: String,
-    // Mirrors: let retryAction: () -> Void
     onRetry: () -> Unit
 ) {
-    // Mirrors: VStack(spacing: 16) { ... }.frame(maxWidth: .infinity, maxHeight: .infinity)
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Mirrors: Image(systemName: "wifi.exclamationmark").font(.system(size: 52)).foregroundColor(.secondary)
         Icon(
             imageVector = Icons.Filled.WifiOff,
             contentDescription = null,
             modifier = Modifier.padding(bottom = 16.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
-
-        // Mirrors: Text("Something went wrong").font(.title3.bold())
         Text(
             text = "Something went wrong",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-
-        // Mirrors: Text(message).font(.subheadline).foregroundColor(.secondary)
         Text(
             text = message,
             fontSize = 14.sp,
@@ -62,8 +48,6 @@ fun ErrorView(
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
         )
-
-        // Mirrors: Button(action: retryAction) { Label("Try Again", systemImage: "arrow.clockwise") ... }
         Button(
             onClick = onRetry,
             shape = RoundedCornerShape(10.dp),
