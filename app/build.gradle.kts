@@ -1,23 +1,19 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.compose)
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("com.google.devtools.ksp")
 }
 
 android {
-    namespace = "com.example.movieappmvc"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    namespace = "com.movieapp.mvc"
+    compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.movieappmvc"
-        minSdk = 24
-        targetSdk = 36
+        applicationId = "com.movieapp.mvc"
+        minSdk = 26
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -30,29 +26,70 @@ android {
             )
         }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
-    buildFeatures {
-        compose = true
+
+    kotlinOptions { jvmTarget = "17" }
+
+    buildFeatures { compose = true }
+
+    composeOptions {
+        // Must match the Kotlin version in use
+        kotlinCompilerExtensionVersion = "1.5.14"
     }
 }
 
 dependencies {
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    testImplementation(libs.junit)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.junit)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
-    debugImplementation(libs.androidx.compose.ui.tooling)
+    val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
+    implementation(composeBom)
+
+    // ── Jetpack Compose UI ────────────────────────────────────────────────────
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
+    // Material Icons Extended (Star, Favorite, CalendarToday, WifiOff …)
+    implementation("androidx.compose.material:material-icons-extended")
+
+    // ── Activity / Lifecycle ──────────────────────────────────────────────────
+    implementation("androidx.activity:activity-compose:1.9.3")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+
+    // ── Navigation ────────────────────────────────────────────────────────────
+    // Mirrors: NavigationStack / NavigationLink in SwiftUI
+    implementation("androidx.navigation:navigation-compose:2.8.5")
+
+    // ── Room (CoreData equivalent) ────────────────────────────────────────────
+    // Mirrors: CoreData stack (NSPersistentContainer, NSManagedObjectContext, NSFetchRequest)
+    val roomVersion = "2.6.1"
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+    ksp("androidx.room:room-compiler:$roomVersion")
+
+    // ── Retrofit + Gson (URLSession + JSONDecoder equivalent) ─────────────────
+    // Mirrors: URLSession.shared.data(from: url) + JSONDecoder().decode(...)
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // ── Coil (AsyncImage equivalent) ──────────────────────────────────────────
+    // Mirrors: SwiftUI AsyncImage(url:)
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
+    // ── Coroutines ────────────────────────────────────────────────────────────
+    // Mirrors: Swift async/await + Combine @Published
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+
+    // ── Testing ───────────────────────────────────────────────────────────────
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation(composeBom)
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
