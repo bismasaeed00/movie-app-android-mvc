@@ -1,0 +1,94 @@
+# ---------------------------------------------------------------------------
+# Shared Detekt configuration — "Quantifying the Architectural Tax"
+#
+# This file is BYTE-IDENTICAL between the MVC and the MVVM + Clean Architecture
+# study objects. It exists so that any difference in reported code quality
+# between the two codebases is attributable to architecture rather than to
+# differing lint settings.
+#
+# It is deliberately NOT applied via the Gradle build: adding a plugin to the
+# participant-facing build would introduce a network-resolved dependency that
+# could fail during a timed session. Run it from the researcher's machine:
+#
+#   detekt --config config/detekt/detekt.yml --input app/src/main/java \
+#          --report xml:build/detekt.xml
+#
+# Do not edit one copy without editing the other.
+# ---------------------------------------------------------------------------
+
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+complexity:
+  active: true
+  CognitiveComplexMethod:
+    active: true
+    threshold: 15
+  CyclomaticComplexMethod:
+    active: true
+    threshold: 15
+    ignoreSingleWhenExpression: false
+    ignoreSimpleWhenEntries: false
+    ignoreNestingFunctions: false
+  LongMethod:
+    active: true
+    threshold: 60
+  LongParameterList:
+    active: true
+    functionThreshold: 6
+    constructorThreshold: 7
+    ignoreDefaultParameters: false
+  NestedBlockDepth:
+    active: true
+    threshold: 4
+  TooManyFunctions:
+    active: true
+    thresholdInFiles: 11
+    thresholdInClasses: 11
+    thresholdInInterfaces: 11
+    thresholdInObjects: 11
+    ignorePrivate: false
+    ignoreOverridden: false
+
+coroutines:
+  active: true
+
+empty-blocks:
+  active: true
+
+exceptions:
+  active: true
+  TooGenericExceptionCaught:
+    active: false
+
+naming:
+  active: true
+  FunctionNaming:
+    active: true
+    # Composable functions are PascalCase by convention in both codebases.
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    active: true
+
+performance:
+  active: true
+
+potential-bugs:
+  active: true
+
+style:
+  active: true
+  MagicNumber:
+    active: false
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+  UnusedPrivateMember:
+    active: true
+  WildcardImport:
+    active: true

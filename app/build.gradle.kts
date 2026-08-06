@@ -60,28 +60,23 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
 
     // ── Navigation ────────────────────────────────────────────────────────────
-    // Mirrors: NavigationStack / NavigationLink in SwiftUI
     implementation("androidx.navigation:navigation-compose:2.8.5")
 
-    // ── Room (CoreData equivalent) ────────────────────────────────────────────
-    // Mirrors: CoreData stack (NSPersistentContainer, NSManagedObjectContext, NSFetchRequest)
+    // ── Room ──────────────────────────────────────────────────────────────────
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
 
-    // ── Retrofit + Gson (URLSession + JSONDecoder equivalent) ─────────────────
-    // Mirrors: URLSession.shared.data(from: url) + JSONDecoder().decode(...)
+    // ── Retrofit + Gson ───────────────────────────────────────────────────────
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
-    // ── Coil (AsyncImage equivalent) ──────────────────────────────────────────
-    // Mirrors: SwiftUI AsyncImage(url:)
+    // ── Coil ──────────────────────────────────────────────────────────────────
     implementation("io.coil-kt:coil-compose:2.7.0")
 
     // ── Coroutines ────────────────────────────────────────────────────────────
-    // Mirrors: Swift async/await + Combine @Published
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     // ── Testing ───────────────────────────────────────────────────────────────
