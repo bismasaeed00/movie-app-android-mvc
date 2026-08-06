@@ -19,11 +19,20 @@ sealed class MovieServiceError(message: String) : Exception(message) {
 
 interface TmdbApiService {
 
+    // Sorted by vote_count rather than popularity so that the dataset
+    // participants work with is stable across sessions. Popularity is
+    // recomputed daily by TMDB, which would give participants run in different
+    // weeks different movies, different genres, and therefore different task
+    // difficulty. Vote counts only accumulate, and the gaps between adjacent
+    // titles on these pages are large enough that the ordering does not change
+    // over the study period. `language` is pinned so that titles do not vary
+    // with device locale.
     @GET("discover/movie")
     suspend fun fetchMovies(
         @Query("api_key") apiKey: String,
-        @Query("sort_by") sortBy: String = "popularity.desc",
+        @Query("sort_by") sortBy: String = "vote_count.desc",
         @Query("include_adult") includeAdult: Boolean = false,
+        @Query("language") language: String = "en-US",
         @Query("page") page: Int
     ): Response<MovieResponse>
 
