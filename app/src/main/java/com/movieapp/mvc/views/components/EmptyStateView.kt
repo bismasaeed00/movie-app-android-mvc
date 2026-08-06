@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.MovieFilter
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,30 +18,38 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun EmptyStateView() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
+fun EmptyStateView(
+    icon: @Composable () -> Unit = {
         Icon(
-            imageVector = Icons.Filled.Movie,
+            imageVector = Icons.Filled.MovieFilter,
             contentDescription = null,
-            modifier = Modifier.padding(bottom = 16.dp),
+            modifier = Modifier.padding(bottom = 8.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    },
+    title: String = "No Movies Yet",
+    message: String = "Pull down to load movies from the network."
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        icon()
         Text(
-            text = "No Movies Yet",
+            text = title,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(top = 16.dp)
         )
         Text(
-            text = "Pull down to load movies from the network.",
+            text = message,
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 32.dp)
+            modifier = Modifier.padding(top = 8.dp)
         )
     }
 }

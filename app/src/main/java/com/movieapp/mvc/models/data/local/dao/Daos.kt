@@ -49,6 +49,9 @@ interface GenreDao {
     @Query("SELECT * FROM genre_entity WHERE movieId = :movieId")
     fun getByMovieId(movieId: Long): List<GenreEntity>
 
+    @Query("DELETE FROM genre_entity WHERE movieId = :movieId")
+    fun deleteByMovieId(movieId: Long)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(entity: GenreEntity)
 }

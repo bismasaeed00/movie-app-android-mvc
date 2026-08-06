@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.Button
@@ -25,38 +24,33 @@ fun ErrorView(
     onRetry: () -> Unit
 ) {
     Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
             imageVector = Icons.Filled.WifiOff,
             contentDescription = null,
-            modifier = Modifier.padding(bottom = 16.dp),
+            modifier = Modifier.padding(bottom = 8.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = "Something went wrong",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(top = 16.dp)
         )
         Text(
             text = message,
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
+            modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
         )
-        Button(
-            onClick = onRetry,
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier.padding(top = 8.dp)
-        ) {
-            Text(
-                text = "↺  Try Again",
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-            )
+        Button(onClick = onRetry) {
+            Text("Try Again")
         }
     }
 }

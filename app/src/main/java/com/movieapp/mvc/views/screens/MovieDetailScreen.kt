@@ -1,6 +1,5 @@
 package com.movieapp.mvc.views.screens
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -8,19 +7,21 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,6 +39,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -49,8 +51,7 @@ import coil.compose.AsyncImage
 import com.movieapp.mvc.controllers.MovieDetailController
 import com.movieapp.mvc.models.display.MovieDetailDisplay
 
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovieDetailScreen(
     movieId: Int,
@@ -69,18 +70,26 @@ fun MovieDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(display?.title ?: "", maxLines = 1) },
+                title = { Text(display?.title ?: "") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
                     }
                 },
                 actions = {
                     display?.let {
-                        FavouriteButton(
-                            isFavourite = it.isFavourite,
-                            onToggle = { controller.toggleFavourite() }
-                        )
+                        IconButton(onClick = { controller.toggleFavourite() }) {
+                            Icon(
+                                imageVector = if (it.isFavourite) Icons.Filled.Favorite
+                                              else Icons.Filled.FavoriteBorder,
+                                contentDescription = "Toggle Favourite",
+                                tint = if (it.isFavourite) Color.Red
+                                       else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
                 }
             )
@@ -88,7 +97,9 @@ fun MovieDetailScreen(
     ) { paddingValues ->
         if (display == null) {
             Box(
-                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) { CircularProgressIndicator() }
         } else {
@@ -97,114 +108,137 @@ fun MovieDetailScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DetailContent(display: MovieDetailDisplay, paddingValues: PaddingValues) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
             .padding(paddingValues)
+            .fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .padding(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .padding(vertical = 16.dp)
     ) {
-        PosterView(posterUrl = display.posterUrl)
+        PosterSection(posterUrl = display.posterUrl)
 
         Column(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(top = 20.dp)
         ) {
-            Text(text = display.title, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = display.title,
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp
+            )
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Filled.CalendarToday,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = display.year,
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Filled.Star, contentDescription = null, tint = Color.Yellow)
-                    Text(
-                        text = display.rating,
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            HorizontalDivider()
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row {
-                Text("Runtime: ", fontWeight = FontWeight.SemiBold)
+                Icon(
+                    imageVector = Icons.Filled.CalendarMonth,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = " ${display.year}",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(end = 12.dp)
+                )
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = Color(0xFFFFD700)
+                )
+                Text(
+                    text = " ${display.rating}",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+            Row {
+                Text(text = "Runtime: ", fontWeight = FontWeight.Bold)
                 Text(text = display.runtime, fontSize = 14.sp)
             }
 
-            HorizontalDivider()
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
-            Text("Overview", fontWeight = FontWeight.SemiBold)
+            Text(text = "Overview", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = display.overview,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            if (display.genres.isNotEmpty()) {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    display.genres.forEach { genre ->
-                        Surface(shape = RoundedCornerShape(50), color = Color.Blue) {
-                            Text(
-                                text = genre,
-                                color = Color.White,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
-                            )
-                        }
-                    }
-                }
-            }
-
             Spacer(modifier = Modifier.height(16.dp))
+
+            if (display.genres.isNotEmpty()) {
+                GenreSection(genres = display.genres)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun GenreSection(genres: List<String>) {
+    FlowRow(
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+    ) {
+        genres.forEach { genre ->
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primary
+            ) {
+                Text(
+                    text = genre,
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun FavouriteButton(isFavourite: Boolean, onToggle: () -> Unit) {
-    IconButton(onClick = onToggle) {
-        Icon(
-            imageVector = if (isFavourite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-            contentDescription = if (isFavourite) "Remove from favourites" else "Add to favourites",
-            tint = if (isFavourite) Color.Red else MaterialTheme.colorScheme.onSurface
+private fun PosterSection(posterUrl: String?) {
+    if (posterUrl != null) {
+        AsyncImage(
+            model = posterUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(300.dp)
         )
+    } else {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(260.dp)
+                .padding(horizontal = 16.dp)
+                .clip(RoundedCornerShape(16.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier.matchParentSize()
+            ) {}
+            Icon(
+                imageVector = Icons.Filled.Movie,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
-}
-
-@Composable
-private fun PosterView(posterUrl: String?) {
-    AsyncImage(
-        model = posterUrl,
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
-        modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f)
-    )
 }
