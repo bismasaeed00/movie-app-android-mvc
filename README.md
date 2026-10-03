@@ -24,7 +24,10 @@ to incidental variation. Held constant:
 - Feature set and UI
 - Toolchain: AGP 8.7.3, Kotlin 2.0.21, KSP 2.0.21-1.0.27, Gradle 9.4.1, JDK 17
 - Compose BOM 2024.09.00 and all shared library versions
-- Test and debug tooling, so Compose Previews behave the same in both
+- Networking: Retrofit 2.11.0 with the Gson converter, wired to the same TMDB
+  endpoints and query parameters
+- Test and debug tooling, so Compose Previews behave the same in both, and
+  `kotlinx-coroutines-test` for unit tests; neither object ships with tests
 - Lint configuration (`config/detekt/detekt.yml`, byte-identical in both repos)
 - `compileSdk` 35, `minSdk` 26, `targetSdk` 35
 
@@ -34,8 +37,6 @@ Deliberate, architecture-driven differences are limited to:
   UI / domain / data separation with an explicit Dependency Rule.
 - **Dependency injection.** None; dependencies are constructed in place, whereas
   the Clean Architecture object uses Hilt for cross-layer wiring.
-- **Networking.** This object uses Retrofit, which pulls Gson in transitively;
-  the Clean Architecture object calls the API directly and parses with Gson.
 
 Both are fenced and commented in `app/build.gradle.kts` and
 `gradle/libs.versions.toml`.

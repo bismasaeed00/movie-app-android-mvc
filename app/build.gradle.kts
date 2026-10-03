@@ -70,17 +70,18 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
-    // ── Architecture-specific: networking ────────────────────────────────────
-    // This object uses Retrofit; Gson arrives transitively via the converter.
-    // There is no DI container — dependencies are constructed in place, which
-    // is the MVC baseline this study contrasts against.
+    // Networking
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
-    implementation(libs.okhttp.logging.interceptor)
+
+    // ── Architecture-specific ────────────────────────────────────────────────
+    // There is no DI container — dependencies are constructed in place, which
+    // is the MVC baseline this study contrasts against.
     // ─────────────────────────────────────────────────────────────────────────
 
     // Testing
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

@@ -17,6 +17,7 @@ navigationCompose = "2.7.7"
 room = "2.6.1"
 coil = "2.6.0"
 coroutines = "1.8.1"
+retrofit = "2.11.0"
 
 # ── Test libraries ──────────────────────────────────────────────────────────
 # Shared. Present so that both study objects offer participants identical
@@ -26,11 +27,9 @@ androidxJunit = "1.2.1"
 espressoCore = "3.6.1"
 
 # ── Architecture-specific ───────────────────────────────────────────────────
-# THIS STUDY OBJECT ONLY (MVC). Retrofit and OkHttp provide the networking
-# stack; the other object calls the API directly and parses with Gson, which
-# Retrofit's converter pulls in transitively here.
-retrofit = "2.11.0"
-okhttp = "4.12.0"
+# THIS STUDY OBJECT ONLY (MVC). None: the MVC object adds no libraries of its
+# own. Its architecture-driven difference is the absence of the DI framework
+# the other object carries.
 
 [libraries]
 # ── Shared ──────────────────────────────────────────────────────────────────
@@ -54,14 +53,12 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxJunit" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
-
-# ── Architecture-specific (MVC) ─────────────────────────────────────────────
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
-okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+junit ={ group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxJunit" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
